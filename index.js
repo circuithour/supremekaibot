@@ -16,7 +16,7 @@ require('dotenv').config();
 client.on('ready', () => {
   console.log('Bot Online!');
   client.user.setPresence({
-    activities: [{ name: `Summer Olympics`, type: ActivityType.Competing }],
+    activities: [{ name: `Universe 7`, type: ActivityType.Watching }],
     status: 'online',
   });
 

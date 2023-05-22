@@ -15,6 +15,14 @@ const commands = [
         name: 'unbirdy',
         description: 'Disables hourly bird messages in the channel.'
     },
+    {
+        name: 'bird',
+        description: 'Sends a picture of a bird.'
+    },
+    {
+        name: 'fox',
+        description: 'Sends a picture of a fox.'
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
@@ -33,3 +41,4 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
         console.log(`Error Occurred: ${error}`);
     }
 })();
+

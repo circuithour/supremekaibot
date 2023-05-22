@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fetch = require('node-fetch').default;
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const client = new Client({
   shardCount: 2,
@@ -9,6 +10,9 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
   ],
 });
+
+const birdUrl = 'https://api.tail.cafe/image/bird';
+const foxUrl = 'https://api.tail.cafe/image/fox';
 
 require('dotenv').config();
 
@@ -27,15 +31,12 @@ client.on('ready', () => {
     sendBirds();
     setInterval(sendBirds, 3600000);
   }, remaining);
-
 });
-
-
 
 // New Commands
 
-client.on('interactionCreate', (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isCommand()) return;
 
   //ping
   if (interaction.commandName === 'ping') {
@@ -95,7 +96,7 @@ client.on('interactionCreate', (interaction) => {
       let channelIDs = JSON.parse(data);
 
       if (!channelIDs.includes(channelID)) {
-        interaction.reply('This channel is not currently subscribed to birds.');
+        interaction.reply('This channel is not subscribed to birds.');
         return;
       }
 
@@ -114,33 +115,79 @@ client.on('interactionCreate', (interaction) => {
     });
   }
 
+  //bird
+  if (interaction.commandName === 'bird') {
+    sendBird(interaction, birdUrl);
+  }
 
+  //fox
+  if (interaction.commandName === 'fox') {
+    sendFox(interaction, foxUrl);
+  }
 });
 
-/* Commands
-client.on('messageCreate', async (message) => {
-  switch (message.content.toLowerCase().trim()) {
-    // ping
-    case '~ping':
-      const startTime = Date.now(); // Capture the current timestamp
-      const reply = await message.channel.send('Pinging...');
-      const endTime = Date.now(); // Capture the timestamp after sending the initial message
-      const pingTime = endTime - startTime; // Calculate the difference in milliseconds
+// Send a bird image to the server
+async function sendBird(interaction, url) {
+  try {
+    const bird = await fetch(url);
+    const birdJson = await bird.json();
 
-      reply.edit(`Pong, took ${pingTime}ms`);
-      break;
+    if (!birdJson.image) {
+      console.error('Empty bird image URL received.');
+      interaction.reply('Uh oh, birdy flew away.');
+      return;
+    }
 
-    // ping2
-    case '~ping2':
-      await message.channel.send(`Latency is ${client.ws.ping}ms`);
-      break;
-
-    // shard
-    case '~shard':
-      const shardCount = client.shard.count;
-      await message.channel.send(`There are ${shardCount} shards.`);
-      break;
+    interaction.reply({ content: birdJson.image, ephemeral: false });
+  } catch (error) {
+    console.error('Failed to send bird image:', error);
+    interaction.reply('Uh oh, birdy flew away.');
   }
-});*/
+}
+
+// Send a fox image to the server
+async function sendFox(interaction, url) {
+  try {
+    const fox = await fetch(url);
+    const foxJson = await fox.json();
+
+    if (!foxJson.image) {
+      console.error('Empty fox image URL received.');
+      interaction.reply('Uh oh, the fox ran away.');
+      return;
+    }
+
+    interaction.reply({ content: foxJson.image, ephemeral: false });
+  } catch (error) {
+    console.error('Failed to send fox image:', error);
+    interaction.reply('Uh oh, the fox ran away.');
+  }
+}
+
+// Send bird images to subscribed channels
+async function sendBirds() {
+  fs.readFile('channelIDs.json', 'utf8', async (err, data) => {
+    if (err) {
+      console.error('Error reading channelIDs.json:', err);
+      return;
+    }
+
+    const channelIDs = JSON.parse(data);
+    const bird = await fetch(birdUrl);
+    const birdJson = await bird.json();
+
+    channelIDs.forEach((channelID) => {
+      const channel = client.channels.cache.get(channelID);
+      if (!channel) {
+        console.error(`Channel ID ${channelID} not found.`);
+        return;
+      }
+
+      channel.send(birdJson.image)
+        .then(() => console.log(`Bird image sent to channel ${channelID}`))
+        .catch((error) => console.error(`Failed to send bird image to channel ${channelID}:`, error));
+    });
+  });
+}
 
 client.login(process.env.BOT_TOKEN);

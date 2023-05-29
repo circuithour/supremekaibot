@@ -23,6 +23,10 @@ const commands = [
         name: 'fox',
         description: 'Sends a picture of a fox.'
     },
+    {
+        name: 'cat',
+        description: 'Sends a picture of a cat.'
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);

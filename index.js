@@ -13,6 +13,7 @@ const client = new Client({
 
 const birdUrl = 'https://api.tail.cafe/image/bird';
 const foxUrl = 'https://api.tail.cafe/image/fox';
+const catUrl = 'https://shibe.online/api/cats?count=1&urls=true&httpsUrls=true';
 
 require('dotenv').config();
 
@@ -124,6 +125,11 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'fox') {
     sendFox(interaction, foxUrl);
   }
+
+  //fox
+  if (interaction.commandName === 'cat') {
+    sendCat(interaction, catUrl);
+  }
 });
 
 // Send a bird image to the server
@@ -163,6 +169,37 @@ async function sendFox(interaction, url) {
     interaction.reply('Uh oh, the fox ran away.');
   }
 }
+
+// Send a cat image to the server
+async function sendCat(interaction, url) {
+  try {
+    const cat = await fetch(url);
+    const catJson = await cat.json();
+
+    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0]) {
+      console.error('Empty cat image URL received.');
+      interaction.reply('Uh oh, the cat went missing.');
+      return;
+    }
+
+    const catImageUrl = catJson[0];
+    const response = await fetch(catImageUrl);
+    const buffer = await response.buffer();
+    const fileSize = Buffer.byteLength(buffer);
+
+    if (fileSize === 0) {
+      console.error('Empty cat image received.');
+      interaction.reply('Uh oh, the cat went missing.');
+      return;
+    }
+
+    interaction.reply({ files: [buffer], ephemeral: false });
+  } catch (error) {
+    console.error('Failed to send cat image:', error);
+    interaction.reply('Uh oh, the cat went missing.');
+  }
+}
+
 
 // Send bird images to subscribed channels
 async function sendBirds() {

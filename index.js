@@ -126,7 +126,7 @@ client.on('interactionCreate', async (interaction) => {
     sendFox(interaction, foxUrl);
   }
 
-  //fox
+  //cat
   if (interaction.commandName === 'cat') {
     sendCat(interaction, catUrl);
   }

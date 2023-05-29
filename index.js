@@ -30,6 +30,7 @@ client.on('ready', () => {
   const remaining = 3600000 - time;
   setTimeout(() => {
     sendBirds();
+    sendCats();
     setInterval(sendBirds, 3600000);
   }, remaining);
 });
@@ -84,6 +85,38 @@ client.on('interactionCreate', async (interaction) => {
     });
   }
 
+  // kitty
+  if (interaction.commandName === 'kitty') {
+    const channelID = interaction.channelId;
+
+    fs.readFile('catchannelIDs.json', 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading catchannelIDs.json:', err);
+        return;
+      }
+
+      let catchannelIDs = JSON.parse(data);
+
+      if (catchannelIDs.includes(channelID)) {
+        interaction.reply('This channel is already subscribed to cats.');
+        return;
+      }
+
+      catchannelIDs.push(channelID);
+
+      fs.writeFile('catchannelIDs.json', JSON.stringify(catchannelIDs), (err) => {
+        if (err) {
+          console.error('Error writing catchannelIDs.json:', err);
+          return;
+        }
+
+        console.log(`Channel ID ${channelID} added to catchannelIDs.json`);
+
+        interaction.reply(`This channel has been subscribed to cats. You may use /unkitty to opt out.`);
+      });
+    });
+  }
+
   //unbirdy
   if (interaction.commandName === 'unbirdy') {
     const channelID = interaction.channelId;
@@ -116,6 +149,38 @@ client.on('interactionCreate', async (interaction) => {
     });
   }
 
+  //unkitty
+  if (interaction.commandName === 'unkitty') {
+    const channelID = interaction.channelId;
+
+    fs.readFile('catchannelIDs.json', 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading catchannelIDs.json:', err);
+        return;
+      }
+
+      let catchannelIDs = JSON.parse(data);
+
+      if (!catchannelIDs.includes(channelID)) {
+        interaction.reply('This channel is not subscribed to cats.');
+        return;
+      }
+
+      catchannelIDs = catchannelIDs.filter((id) => id !== channelID);
+
+      fs.writeFile('channelIDs.json', JSON.stringify(catchannelIDs), (err) => {
+        if (err) {
+          console.error('Error writing catchannelIDs.json:', err);
+          return;
+        }
+
+        console.log(`Channel ID ${channelID} removed from catchannelIDs.json`);
+
+        interaction.reply(`You have successfully removed cats from this channel.`);
+      });
+    });
+  }
+
   //bird
   if (interaction.commandName === 'bird') {
     sendBird(interaction, birdUrl);
@@ -130,6 +195,8 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'cat') {
     sendCat(interaction, catUrl);
   }
+
+
 });
 
 // Send a bird image to the server
@@ -223,6 +290,47 @@ async function sendBirds() {
       channel.send(birdJson.image)
         .then(() => console.log(`Bird image sent to channel ${channelID}`))
         .catch((error) => console.error(`Failed to send bird image to channel ${channelID}:`, error));
+    });
+  });
+}
+
+// Send cat images to subscribed channels
+async function sendCats() {
+  fs.readFile('catchannelIDs.json', 'utf8', async (err, data) => {
+    if (err) {
+      console.error('Error reading catchannelIDs.json:', err);
+      return;
+    }
+
+    const catchannelIDs = JSON.parse(data);
+    const cat = await fetch(catUrl);
+    const catJson = await cat.json();
+
+    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0]) {
+      console.error('Empty cat image URL received.');
+      return;
+    }
+
+    const catImageUrl = catJson[0];
+    const response = await fetch(catImageUrl);
+    const buffer = await response.buffer();
+    const fileSize = Buffer.byteLength(buffer);
+
+    if (fileSize === 0) {
+      console.error('Empty cat image received.');
+      return;
+    }
+
+    catchannelIDs.forEach((channelID) => {
+      const channel = client.channels.cache.get(channelID);
+      if (!channel) {
+        console.error(`Channel ID ${channelID} not found.`);
+        return;
+      }
+
+      channel.send({ files: [buffer] })
+        .then(() => console.log(`Cat image sent to channel ${channelID}`))
+        .catch((error) => console.error(`Failed to send cat image to channel ${channelID}:`, error));
     });
   });
 }

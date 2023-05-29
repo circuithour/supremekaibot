@@ -16,6 +16,14 @@ const commands = [
         description: 'Disables hourly bird messages in the channel.'
     },
     {
+        name: 'kitty',
+        description: 'Enables hourly cat messages in the channel.'
+    },
+    {
+        name: 'unkitty',
+        description: 'Disables hourly cat messages in the channel.'
+    },
+    {
         name: 'bird',
         description: 'Sends a picture of a bird.'
     },

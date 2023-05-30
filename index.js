@@ -31,7 +31,10 @@ client.on('ready', () => {
   setTimeout(() => {
     sendBirds();
     sendCats();
-    setInterval(sendBirds, sendCats, 3600000);
+    setInterval(() => {
+      sendBirds();
+      sendCats();
+    }, 3600000);
   }, remaining);
 });
 

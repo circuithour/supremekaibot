@@ -21,7 +21,7 @@ require('dotenv').config();
 client.on('ready', () => {
   console.log('Bot Online!');
   client.user.setPresence({
-    activities: [{ name: `Baseball`, type: ActivityType.Playing }],
+    activities: [{ name: `Ancient Songs`, type: ActivityType.Listening }],
     status: 'online',
   });
 

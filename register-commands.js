@@ -28,6 +28,18 @@ const commands = [
         description: 'Sends a picture of a bird.'
     },
     {
+        name: 'manualbird',
+        description: 'Sends a message to all bird channels. Only available to @daisybirdy',
+        options: [
+            {
+                name: 'message',
+                description: 'The message to send',
+                type: 3,
+                required: true
+            }
+        ]
+    },
+    {
         name: 'fox',
         description: 'Sends a picture of a fox.'
     },
@@ -53,4 +65,3 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
         console.log(`Error Occurred: ${error}`);
     }
 })();
-

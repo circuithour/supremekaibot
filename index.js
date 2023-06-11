@@ -21,7 +21,7 @@ require('dotenv').config();
 client.on('ready', () => {
   console.log('Bot Online!');
   client.user.setPresence({
-    activities: [{ name: `Ancient Songs`, type: ActivityType.Listening }],
+    activities: [{ name: `With Wind`, type: ActivityType.Playing }],
     status: 'online',
   });
 
@@ -85,6 +85,51 @@ client.on('interactionCreate', async (interaction) => {
 
         interaction.reply(`This channel has been subscribed to birds. You may use /unbirdy to opt out.`);
       });
+    });
+  }
+
+  // manualbird
+  if (interaction.commandName === 'manualbird') {
+    const userID = interaction.user.id;
+    if (userID !== '476231590196805633') {
+      interaction.reply('You are not authorized to use this command.');
+      return;
+    }
+
+    const messageOption = interaction.options.getString('message');
+    if (!messageOption) {
+      interaction.reply('Please provide a message to send.');
+      return;
+    }
+
+    const message = messageOption;
+
+    fs.readFile('channelIDs.json', 'utf8', async (err, data) => {
+      if (err) {
+        console.error('Error reading channelIDs.json:', err);
+        return;
+      }
+
+      const channelIDs = JSON.parse(data);
+
+      const promises = channelIDs.map(async (channelID) => {
+        try {
+          const channel = await client.channels.fetch(channelID);
+          if (!channel) {
+            console.error(`Channel ID ${channelID} not found.`);
+            return;
+          }
+
+          await channel.send(message);
+          console.log(`Message sent to channel ${channelID}`);
+        } catch (error) {
+          console.error(`Failed to send message to channel ${channelID}:`, error);
+        }
+      });
+
+      await Promise.all(promises);
+
+      interaction.reply(`The message "${message}" has been sent to all channels subscribed to birds.`);
     });
   }
 

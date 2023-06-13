@@ -343,6 +343,8 @@ async function sendBirds() {
 }
 
 // Send cat images to subscribed channels
+/* 
+
 async function sendCats() {
   fs.readFile('catchannelIDs.json', 'utf8', async (err, data) => {
     if (err) {
@@ -382,5 +384,32 @@ async function sendCats() {
     });
   });
 }
+
+*/
+
+//temp code cuz broke
+async function sendCats() {
+  fs.readFile('catchannelIDs.json', 'utf8', async (err, data) => {
+    if (err) {
+      console.error('Error reading catchannelIDs.json:', err);
+      return;
+    }
+
+    const catchannelIDs = JSON.parse(data);
+
+    catchannelIDs.forEach((channelID) => {
+      const channel = client.channels.cache.get(channelID);
+      if (!channel) {
+        console.error(`Channel ID ${channelID} not found.`);
+        return;
+      }
+
+      channel.send('My cat dealer is gone so I am sending this placeholder instead.')
+        .then(() => console.log(`Cat message sent to channel ${channelID}`))
+        .catch((error) => console.error(`Failed to send cat message to channel ${channelID}:`, error));
+    });
+  });
+}
+
 
 client.login(process.env.BOT_TOKEN);

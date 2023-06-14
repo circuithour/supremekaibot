@@ -13,7 +13,7 @@ const client = new Client({
 
 const birdUrl = 'https://api.tail.cafe/image/bird';
 const foxUrl = 'https://api.tail.cafe/image/fox';
-const catUrl = 'https://shibe.online/api/cats?count=1&urls=true&httpsUrls=true';
+const catUrl = 'https://cataas.com/cat?json=true';
 
 require('dotenv').config();
 
@@ -288,18 +288,18 @@ async function sendFox(interaction, url) {
 // Send a cat image to the server
 async function sendCat(interaction, url) {
   try {
-    const cat = await fetch(url);
-    const catJson = await cat.json();
+    const catResponse = await fetch(url);
+    const catJson = await catResponse.json();
 
-    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0]) {
+    if (!catJson.url) {
       console.error('Empty cat image URL received.');
       interaction.reply('Uh oh, the cat went missing.');
       return;
     }
 
-    const catImageUrl = catJson[0];
-    const response = await fetch(catImageUrl);
-    const buffer = await response.buffer();
+    const catImageUrl = new URL(catJson.url, url).href;
+    const imageResponse = await fetch(catImageUrl);
+    const buffer = await imageResponse.buffer();
     const fileSize = Buffer.byteLength(buffer);
 
     if (fileSize === 0) {
@@ -343,27 +343,21 @@ async function sendBirds() {
 }
 
 // Send cat images to subscribed channels
-/* 
 
 async function sendCats() {
-  fs.readFile('catchannelIDs.json', 'utf8', async (err, data) => {
-    if (err) {
-      console.error('Error reading catchannelIDs.json:', err);
-      return;
-    }
-
-    const catchannelIDs = JSON.parse(data);
-    const cat = await fetch(catUrl);
-    const catJson = await cat.json();
+  try {
+    const catchannelIDs = require('./catchannelIDs.json');
+    const catResponse = await fetch(catUrl);
+    const catJson = await catResponse.json();
 
     if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0]) {
       console.error('Empty cat image URL received.');
       return;
     }
 
-    const catImageUrl = catJson[0];
-    const response = await fetch(catImageUrl);
-    const buffer = await response.buffer();
+    const catImageUrl = new URL(catJson[0].url, catUrl).href;
+    const imageResponse = await fetch(catImageUrl);
+    const buffer = await imageResponse.buffer();
     const fileSize = Buffer.byteLength(buffer);
 
     if (fileSize === 0) {
@@ -371,45 +365,26 @@ async function sendCats() {
       return;
     }
 
-    catchannelIDs.forEach((channelID) => {
+    catchannelIDs.forEach(async (channelID) => {
       const channel = client.channels.cache.get(channelID);
       if (!channel) {
         console.error(`Channel ID ${channelID} not found.`);
         return;
       }
 
-      channel.send({ files: [buffer] })
-        .then(() => console.log(`Cat image sent to channel ${channelID}`))
-        .catch((error) => console.error(`Failed to send cat image to channel ${channelID}:`, error));
-    });
-  });
-}
-
-*/
-
-//temp code cuz broke
-async function sendCats() {
-  fs.readFile('catchannelIDs.json', 'utf8', async (err, data) => {
-    if (err) {
-      console.error('Error reading catchannelIDs.json:', err);
-      return;
-    }
-
-    const catchannelIDs = JSON.parse(data);
-
-    catchannelIDs.forEach((channelID) => {
-      const channel = client.channels.cache.get(channelID);
-      if (!channel) {
-        console.error(`Channel ID ${channelID} not found.`);
-        return;
+      try {
+        await sendCat({ reply: channel.send.bind(channel) }, catImageUrl);
+        console.log(`Cat image sent to channel ${channelID}`);
+      } catch (error) {
+        console.error(`Failed to send cat image to channel ${channelID}:`, error);
       }
-
-      channel.send('My cat dealer is gone so I am sending this placeholder instead.')
-        .then(() => console.log(`Cat message sent to channel ${channelID}`))
-        .catch((error) => console.error(`Failed to send cat message to channel ${channelID}:`, error));
     });
-  });
+  } catch (error) {
+    console.error('Error sending cats:', error);
+  }
 }
+
+
 
 
 client.login(process.env.BOT_TOKEN);

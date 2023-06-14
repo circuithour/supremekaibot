@@ -355,7 +355,7 @@ async function sendCats() {
       return;
     }
 
-    const catImageUrl = new URL(catJson[0].url, catUrl).href;
+    const catImageUrl = catJson[0].url;
     const imageResponse = await fetch(catImageUrl);
     const buffer = await imageResponse.buffer();
     const fileSize = Buffer.byteLength(buffer);
@@ -383,6 +383,7 @@ async function sendCats() {
     console.error('Error sending cats:', error);
   }
 }
+
 
 
 

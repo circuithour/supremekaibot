@@ -350,12 +350,12 @@ async function sendCats() {
     const catResponse = await fetch(catUrl);
     const catJson = await catResponse.json();
 
-    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0]) {
+    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0] || !catJson[0].url) {
       console.error('Empty cat image URL received.');
       return;
     }
 
-    const catImageUrl = catJson[0].url;
+    const catImageUrl = new URL(catJson[0].url, catUrl).href;
     const imageResponse = await fetch(catImageUrl);
     const buffer = await imageResponse.buffer();
     const fileSize = Buffer.byteLength(buffer);
@@ -383,6 +383,7 @@ async function sendCats() {
     console.error('Error sending cats:', error);
   }
 }
+
 
 
 

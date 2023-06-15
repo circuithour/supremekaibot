@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node .",
-    "register": "node register-commands.js"
+    "register": "node register-commands.js",
+    "deregister": "node deregister-commands.js"
   },
   "keywords": [],
   "author": "",

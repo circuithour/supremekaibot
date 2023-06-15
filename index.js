@@ -344,6 +344,7 @@ async function sendBirds() {
 
 // Send cat images to subscribed channels
 
+// Send cat images to subscribed channels
 async function sendCats() {
   try {
     const catchannelIDs = require('./catchannelIDs.json');
@@ -365,20 +366,22 @@ async function sendCats() {
       return;
     }
 
-    catchannelIDs.forEach(async (channelID) => {
-      const channel = client.channels.cache.get(channelID);
-      if (!channel) {
-        console.error(`Channel ID ${channelID} not found.`);
-        return;
-      }
-
+    const promises = catchannelIDs.map(async (channelID) => {
       try {
+        const channel = await client.channels.fetch(channelID);
+        if (!channel) {
+          console.error(`Channel ID ${channelID} not found.`);
+          return;
+        }
+
         await sendCat({ reply: channel.send.bind(channel) }, catImageUrl);
         console.log(`Cat image sent to channel ${channelID}`);
       } catch (error) {
         console.error(`Failed to send cat image to channel ${channelID}:`, error);
       }
     });
+
+    await Promise.all(promises);
   } catch (error) {
     console.error('Error sending cats:', error);
   }

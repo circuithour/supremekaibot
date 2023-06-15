@@ -4,10 +4,7 @@ const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const client = new Client({
   shardCount: 2,
   intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
+    'Guilds'
   ],
 });
 
@@ -16,6 +13,14 @@ const foxUrl = 'https://api.tail.cafe/image/fox';
 const catUrl = 'https://cataas.com/cat?json=true';
 
 require('dotenv').config();
+
+if (!fs.existsSync('channelIDs.json')) {
+  fs.writeFileSync('channelIDs.json', '[]');
+}
+
+if (!fs.existsSync('catchannelIDs.json')) {
+  fs.writeFileSync('catchannelIDs.json', '[]');
+}
 
 // Bot Boot
 client.on('ready', () => {
@@ -91,7 +96,7 @@ client.on('interactionCreate', async (interaction) => {
   // manualbird
   if (interaction.commandName === 'manualbird') {
     const userID = interaction.user.id;
-    if (userID !== '476231590196805633') {
+    if (userID !== process.env.OWNER_ID) {
       interaction.reply('You are not authorized to use this command.');
       return;
     }
@@ -318,78 +323,54 @@ async function sendCat(interaction, url) {
 
 // Send bird images to subscribed channels
 async function sendBirds() {
-  fs.readFile('channelIDs.json', 'utf8', async (err, data) => {
-    if (err) {
-      console.error('Error reading channelIDs.json:', err);
+  const channelIDs = require('./channelIDs.json');
+  const bird = await fetch(birdUrl);
+  const birdJson = await bird.json();
+
+  if (!('image' in birdJson)) {
+    console.error('Empty bird image URL received.');
+    return;
+  }
+
+  const birdImageUrl = birdJson.image;
+
+  channelIDs.forEach((channelID) => {
+    const channel = client.channels.cache.get(channelID);
+    if (!channel) {
+      console.error(`Channel ID ${channelID} not found.`);
       return;
     }
 
-    const channelIDs = JSON.parse(data);
-    const bird = await fetch(birdUrl);
-    const birdJson = await bird.json();
-
-    channelIDs.forEach((channelID) => {
-      const channel = client.channels.cache.get(channelID);
-      if (!channel) {
-        console.error(`Channel ID ${channelID} not found.`);
-        return;
-      }
-
-      channel.send(birdJson.image)
-        .then(() => console.log(`Bird image sent to channel ${channelID}`))
-        .catch((error) => console.error(`Failed to send bird image to channel ${channelID}:`, error));
-    });
+    channel.send(birdImageUrl)
+      .then(() => console.log(`Bird image sent to channel ${channelID}`))
+      .catch((error) => console.error(`Failed to send bird image to channel ${channelID}:`, error));
   });
 }
 
 // Send cat images to subscribed channels
-
-// Send cat images to subscribed channels
 async function sendCats() {
-  try {
-    const catchannelIDs = require('./catchannelIDs.json');
-    const catResponse = await fetch(catUrl);
-    const catJson = await catResponse.json();
+  const catchannelIDs = require('./catchannelIDs.json');
+  const catResponse = await fetch(catUrl);
+  const catJson = await catResponse.json();
 
-    if (!Array.isArray(catJson) || catJson.length === 0 || !catJson[0] || !catJson[0].url) {
-      console.error('Empty cat image URL received.');
-      return;
-    }
-
-    const catImageUrl = new URL(catJson[0].url, catUrl).href;
-    const imageResponse = await fetch(catImageUrl);
-    const buffer = await imageResponse.buffer();
-    const fileSize = Buffer.byteLength(buffer);
-
-    if (fileSize === 0) {
-      console.error('Empty cat image received.');
-      return;
-    }
-
-    const promises = catchannelIDs.map(async (channelID) => {
-      try {
-        const channel = await client.channels.fetch(channelID);
-        if (!channel) {
-          console.error(`Channel ID ${channelID} not found.`);
-          return;
-        }
-
-        await sendCat({ reply: channel.send.bind(channel) }, catImageUrl);
-        console.log(`Cat image sent to channel ${channelID}`);
-      } catch (error) {
-        console.error(`Failed to send cat image to channel ${channelID}:`, error);
-      }
-    });
-
-    await Promise.all(promises);
-  } catch (error) {
-    console.error('Error sending cats:', error);
+  if (!('url' in catJson)) {
+    console.error('Empty cat image URL received.');
+    return;
   }
+
+  const catImageUrl = new URL(catJson.url, catUrl).href;
+
+  catchannelIDs.forEach((channelID) => {
+    const channel = client.channels.cache.get(channelID);
+    if (!channel) {
+      console.error(`Channel ID ${channelID} not found.`);
+      return;
+    }
+
+    channel.send(catImageUrl)
+      .then(() => console.log(`Cat image sent to channel ${channelID}`))
+      .catch((error) => console.error(`Failed to send cat image to channel ${channelID}:`, error));
+  });
 }
-
-
-
-
-
 
 client.login(process.env.BOT_TOKEN);
